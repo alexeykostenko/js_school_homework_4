@@ -49,16 +49,15 @@ document.querySelector('.btn-roll').addEventListener('click', function() {
   changeDice(diceElement, dice);
   changeDice(dice2Element, dice2);
 
-  if (dice !== RESET_VALUE) {
-    current += dice;
+  if ([dice, dice2].includes(RESET_VALUE) || dice === dice2) {
+    changePlayer();
+  } else {
+    current += dice + dice2;
     document.getElementById('current-'+activePlayer).textContent = current;
 
     if (scores[activePlayer] + current >= 20) {
       alert(`Player ${activePlayer} won!!!`);
     }
-
-  } else {
-    changePlayer();
   }
 });
 
