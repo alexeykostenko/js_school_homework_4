@@ -10,14 +10,15 @@ GAME RULES:
 */
 
 const RESET_VALUE = 1;
-let scores = [0, 0];
 let activePlayer = 0;
 let current = 0;
 let gameLimit;
 const diceElement = document.querySelector('.dice');
 const dice2Element = document.querySelector('.dice2');
-let Gamer = function(name) {
+let Gamer = function(name, number) {
   this.name = name;
+  this.number = number;
+  this.score = 0;
 };
 
 Gamer.prototype.getScore = function() {
@@ -25,17 +26,26 @@ Gamer.prototype.getScore = function() {
 };
 
 Gamer.prototype.setScore = function(score) {
-  if (!this.score) {
     this.score = score;
-  }
 };
 
-Gamer.prototype.resetScore = function(score) {
-  this.score = score;
+Gamer.prototype.resetScore = function() {
+  this.score = 0;
 };
 
-let player1;
-let player2;
+Gamer.prototype.getRating = function() {
+  return localStorage.getItem(this.number);
+};
+
+Gamer.prototype.setRating = function(value) {
+  localStorage.setItem(this.number, value);
+};
+
+Gamer.prototype.increaseRating = function() {
+  this.setRating(this.number, +this.getRating(this.number) + 1);
+};
+
+let players = [];
 
 const initGame = () => {
   document.querySelector('#current-0').textContent = 0;
@@ -44,10 +54,10 @@ const initGame = () => {
   document.querySelector('#score-1').textContent = 0;
   diceElement.style.display = 'none';
   dice2Element.style.display = 'none';
-  player1 = new Gamer(prompt('Enter first player name'));
-  player2 = new Gamer(prompt('Enter second player name'));
-  document.querySelector('#name-0').textContent = player1.name;
-  document.querySelector('#name-1').textContent = player2.name;
+  players[0] = new Gamer(prompt('Enter first player name'), 1);
+  players[1] = new Gamer(prompt('Enter second player name'), 2);
+  document.querySelector('#name-0').textContent = players[0].name;
+  document.querySelector('#name-1').textContent = players[1].name;
 };
 
 initGame();
@@ -80,16 +90,20 @@ document.querySelector('.btn-roll').addEventListener('click', function() {
 
   if ([dice, dice2].includes(RESET_VALUE) || dice === dice2) {
     changePlayer();
+    players[activePlayer].resetScore();
   } else {
     current += dice + dice2;
     document.getElementById('current-'+activePlayer).textContent = current;
+    players[activePlayer].setScore(current);
 
     if (!gameLimit) {
       setGameLimit();
     }
 
-    if (scores[activePlayer] + current >= gameLimit) {
-      alert(`Player ${activePlayer} won!!!`);
+    if (players[activePlayer].getScore() >= gameLimit) {
+      alert(`Player ${players[activePlayer].name} won!!!`);
+
+      players[activePlayer].increaseRating();
     }
   }
 });
@@ -104,11 +118,26 @@ const changePlayer = () => {
 };
 
 document.querySelector('.btn-hold').addEventListener('click', function() {
-  scores[activePlayer] += current;
-  document.querySelector(`#score-${activePlayer}`).textContent = scores[activePlayer];
+  players[activePlayer].resetScore(+players[activePlayer].getScore() + current);
+  document.querySelector(`#score-${activePlayer}`).textContent = players[activePlayer].getScore();
   changePlayer();
 });
 
 document.querySelector('.btn-new').addEventListener('click', function() {
   initGame();
 });
+
+document.querySelector('.btn-rating').addEventListener('click', function() {
+  showRating();
+});
+
+function showRating() {
+  let rating = '';
+  //let sortedPlayers = players.sort((a, b) => (+a.getRating() > +b.getRating()) ? 1 : -1);
+
+  players.forEach(function (player) {
+    rating += `${player.name}: ${player.getRating()}\n`;
+  });
+
+  alert(rating);
+}
